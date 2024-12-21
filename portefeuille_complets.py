@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Portefeuille complets - Chargement depuis le même dossier"""
+"""Portefeuille complets - Gestion des dates et corrections"""
 
 import os
 import pandas as pd
@@ -55,7 +55,12 @@ for key, df in dfs.items():
     else:
         df_combined = pd.merge(df_combined, df[['Date', key]], on='Date', how='outer')
 
-st.success("Fusion réussie !")
+# Gestion des valeurs manquantes
+df_combined = df_combined.sort_values(by='Date').reset_index(drop=True)
+df_combined.fillna(method='ffill', inplace=True)  # Remplissage par les valeurs précédentes
+df_combined.fillna(method='bfill', inplace=True)  # Remplissage par les valeurs suivantes
+
+st.success("Fusion réussie et valeurs manquantes corrigées !")
 st.write("Aperçu des données combinées :")
 st.dataframe(df_combined.head())
 
@@ -66,7 +71,7 @@ duree = st.slider("Durée (années)", 1, 40, 10)
 rendement_annuel = st.slider("Rendement annuel (%)", 1.0, 10.0, 5.0)
 
 # Calcul de la projection
-df_combined['Portfolio_Value'] = montant_initial * (1 + rendement_annuel / 100) ** range(len(df_combined))
+df_combined['Portfolio_Value'] = montant_initial * (1 + rendement_annuel / 100) ** pd.Series(range(len(df_combined)))
 
 # Visualisation
 st.header("Évolution de votre portefeuille 📊")
@@ -76,3 +81,4 @@ ax.set_title(f"Évolution du portefeuille")
 ax.set_xlabel("Date")
 ax.set_ylabel("Valeur (€)")
 st.pyplot(fig)
+
